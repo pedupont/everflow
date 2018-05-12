@@ -6,7 +6,6 @@ import java.sql.SQLException;
 import java.text.ParseException;
 import java.util.ArrayList;
 
-
 public class ReadHeadlines {
 	//Var URL pour faire la lecture à partir de l'adresse 
 	static private URL newsapi;
@@ -24,13 +23,12 @@ public class ReadHeadlines {
 		
 		try {
 			readURLChars();
+			System.out.println("Transfert des nouvelles complété!\n");			
 			//On envoit finalement la liste de nouvelles à notre fichier CSV 
 			CSVwriter.writeNews(listeNews);
 		} catch (ParseException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-		}finally {
-			System.out.println("Transfert complété!");			
 		}
 	}
 	
@@ -38,8 +36,10 @@ public class ReadHeadlines {
 		int car = 0; 
 		String contenu = "";
 		
+		//Lecture du contenu du site caractère par caractère
 		while ((car = reader.read()) != -1) {
 			contenu += (char)car;		
+			//Si on 
 			if ((contenu.split("\"title\"", -1).length-1) == 2) {
 				try {
 					splitNews(contenu);
@@ -48,9 +48,12 @@ public class ReadHeadlines {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}	
-				
 			}
 		}
+		
+		//Quand on sort de la boucle ça veut dire qu'il ne reste plus de texte et la dernière nouvelle a été lue et elle est à ajouter
+		splitNews(contenu);
+		
         reader.close();
 	}
 	
@@ -76,13 +79,18 @@ public class ReadHeadlines {
 		contenu = contenu.substring(url.length(), contenu.length());
 		
 		//Pour délimiter seulement le texte de la date publiée
-		publish = contenu.subSequence(contenu.indexOf("\"publishedAt\""), contenu.indexOf("\"source\"")).toString();
-		publish = publish.substring(15, publish.length() - 4);
-		
-		News n = new News(title, descr, url, publish);
-		
-		//On ajoute finalement notre objet new à notre arraylist
-		listeNews.add(n);
+		if (contenu.indexOf("\"source\"") != -1) {
+			publish = contenu.subSequence(contenu.indexOf("\"publishedAt\""), contenu.indexOf("\"source\"")).toString();
+			publish = publish.substring(15, publish.length() - 4);
+		}
+		else //Si jamais on est à la fin du texte, on délimite la séquence jusqu'à la fin du fichier
+		{
+			publish = contenu.subSequence(contenu.indexOf("\"publishedAt\""), contenu.length()).toString();
+			publish = publish.substring(15, publish.length() - 4);
+		}
+					
+		//On ajoute finalement notre objet news à notre arraylist
+		listeNews.add(new News(title, descr, url, publish));
 	}
 		
 	
